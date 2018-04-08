@@ -23,7 +23,8 @@ public class MqttHelper {
     final String serverUri = "tcp://m23.cloudmqtt.com:16621";
 
     final String clientId = "ExampleAndroidClient";
-    final String subscriptionTopic = "sensor/+";
+    public String controlPubTopic = "/dm/state/control";
+    final String deviceSubTopic = "/dm/state/device";
 
     final String username = "ttswefxi";
     final String password = "xSV4nCq4hnvv";
@@ -50,6 +51,8 @@ public class MqttHelper {
             public void deliveryComplete(IMqttDeliveryToken iMqttDeliveryToken) {
 
             }
+
+
         });
         connect();
     }
@@ -77,7 +80,7 @@ public class MqttHelper {
                     disconnectedBufferOptions.setPersistBuffer(false);
                     disconnectedBufferOptions.setDeleteOldestMessages(false);
                     mqttAndroidClient.setBufferOpts(disconnectedBufferOptions);
-                    subscribeToTopic();
+                    subscribeToTopic(deviceSubTopic, 1);
                 }
 
                 @Override
@@ -93,9 +96,9 @@ public class MqttHelper {
     }
 
 
-    private void subscribeToTopic() {
+    private void subscribeToTopic(String subscriptionTopic, int qos) {
         try {
-            mqttAndroidClient.subscribe(subscriptionTopic, 0, null, new IMqttActionListener() {
+            mqttAndroidClient.subscribe(subscriptionTopic, qos, null, new IMqttActionListener() {
                 @Override
                 public void onSuccess(IMqttToken asyncActionToken) {
                     Log.w("Mqtt","Subscribed!");
@@ -109,6 +112,19 @@ public class MqttHelper {
 
         } catch (MqttException ex) {
             System.err.println("Exception whilst subscribing");
+            ex.printStackTrace();
+        }
+    }
+
+    public void publishMessage(String topic, String message, int _qos) {
+        MqttMessage m = new MqttMessage();
+        m.setPayload(message.getBytes());
+        m.setQos(_qos);
+        m.setRetained(false);
+        try {
+            mqttAndroidClient.publish(topic, m);
+        } catch (MqttException ex) {
+            System.err.println("Exception whilst publish data");
             ex.printStackTrace();
         }
     }
